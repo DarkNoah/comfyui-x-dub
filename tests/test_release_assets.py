@@ -64,7 +64,7 @@ class RegistryReleaseTests(unittest.TestCase):
         self.assertRegex(pyproject, r'(?m)^version\s*=\s*"1\.0\.0"$')
         self.assertRegex(pyproject, r'(?m)^license\s*=\s*\{\s*file\s*=\s*"LICENSE"\s*\}$')
         self.assertIn('[tool.comfy]', pyproject)
-        self.assertRegex(pyproject, r'(?m)^PublisherId\s*=\s*"DarkNoah"$')
+        self.assertRegex(pyproject, r'(?m)^PublisherId\s*=\s*"darknoah"$')
         self.assertRegex(pyproject, r'(?m)^DisplayName\s*=\s*"X-Dub Lip Sync"$')
         self.assertIn('https://github.com/DarkNoah/comfyui-x-dub', pyproject)
 

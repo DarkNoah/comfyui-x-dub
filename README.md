@@ -98,7 +98,7 @@ This repository includes the official Registry metadata in `pyproject.toml`, exc
 
 For the first Registry release, the repository owner must:
 
-1. Create the globally unique `DarkNoah` publisher at [Comfy Registry](https://registry.comfy.org/).
+1. Create the globally unique lowercase `darknoah` publisher at [Comfy Registry](https://registry.comfy.org/).
 2. Create a Registry publishing API key for that publisher.
 3. Add it to this GitHub repository as the Actions secret `REGISTRY_ACCESS_TOKEN`.
 4. Run **Publish to Comfy Registry** from the repository's Actions tab.

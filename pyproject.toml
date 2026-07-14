@@ -16,5 +16,5 @@ Documentation = "https://github.com/DarkNoah/comfyui-x-dub#readme"
 "Issue Tracker" = "https://github.com/DarkNoah/comfyui-x-dub/issues"
 
 [tool.comfy]
-PublisherId = "DarkNoah"
+PublisherId = "darknoah"
 DisplayName = "X-Dub Lip Sync"
