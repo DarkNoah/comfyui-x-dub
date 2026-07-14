@@ -1,0 +1,16 @@
+# Local environments and caches
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.egg-info/
+
+# Downloaded assets and developer-only files
+models/
+wheels/
+cache/
+output/
+tests/
+docs/
+.github/
+.DS_Store

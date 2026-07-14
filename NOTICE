@@ -1,0 +1,12 @@
+ComfyUI X-Dub
+
+Portions of this project under xdub_runtime/source are derived from
+KlingAIResearch/X-Dub:
+https://github.com/KlingAIResearch/X-Dub
+
+The upstream X-Dub code is licensed under the Apache License, Version 2.0.
+Modifications in this distribution include an ONNX-based DWPose preprocessing
+path, a ComfyUI node wrapper, and an isolated subprocess runtime integration.
+
+X-Dub's inference framework is adapted from DiffSynth-Studio, and its public
+model is based on Wan2.2. See README.md for project links and attribution.

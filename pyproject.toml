@@ -1,0 +1,20 @@
+[project]
+name = "x-dub"
+version = "1.0.0"
+description = "ComfyUI custom nodes for Kling X-Dub single-person audio-driven lip sync."
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = []
+classifiers = [
+    "Operating System :: POSIX :: Linux",
+    "Environment :: GPU :: NVIDIA CUDA",
+]
+
+[project.urls]
+Repository = "https://github.com/DarkNoah/comfyui-x-dub"
+Documentation = "https://github.com/DarkNoah/comfyui-x-dub#readme"
+"Issue Tracker" = "https://github.com/DarkNoah/comfyui-x-dub/issues"
+
+[tool.comfy]
+PublisherId = "DarkNoah"
+DisplayName = "X-Dub Lip Sync"
