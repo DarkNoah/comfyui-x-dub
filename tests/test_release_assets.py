@@ -61,7 +61,7 @@ class RegistryReleaseTests(unittest.TestCase):
     def test_pyproject_has_official_comfy_metadata(self):
         pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         self.assertRegex(pyproject, r'(?m)^name\s*=\s*"x-dub"$')
-        self.assertRegex(pyproject, r'(?m)^version\s*=\s*"1\.0\.0"$')
+        self.assertRegex(pyproject, r'(?m)^version\s*=\s*"1\.1\.0"$')
         self.assertRegex(pyproject, r'(?m)^license\s*=\s*\{\s*file\s*=\s*"LICENSE"\s*\}$')
         self.assertIn('[tool.comfy]', pyproject)
         self.assertRegex(pyproject, r'(?m)^PublisherId\s*=\s*"darknoah"$')

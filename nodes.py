@@ -1,5 +1,6 @@
 import hashlib
 import os
+import re
 import subprocess
 from collections import deque
 import tempfile
@@ -22,12 +23,43 @@ try:
 except ImportError:
     InputImpl = None
 
+try:
+    from comfy.utils import ProgressBar as ComfyProgressBar
+except ImportError:
+    ComfyProgressBar = None
+
 PLUGIN_DIR = Path(__file__).resolve().parent
 RUNNER = PLUGIN_DIR / "xdub_runtime" / "runner.py"
 RUNTIME_PYTHON = PLUGIN_DIR / ".venv" / "bin" / "python"
 VAE_CACHE_DIR = PLUGIN_DIR / "cache" / "vae"
 FPS = 25
 _VAE_PATH_CACHE = {}
+
+
+class _XDubProgressTracker:
+    _PATTERN = re.compile(r"^\[X-Dub Progress\] ([0-9]{1,3})$")
+
+    def __init__(self, progress_bar=None):
+        if progress_bar is None and ComfyProgressBar is not None:
+            progress_bar = ComfyProgressBar(100)
+        self.progress_bar = progress_bar
+        self.last_value = -1
+        self._update(0)
+
+    def _update(self, value):
+        if not 0 <= value <= 100 or value <= self.last_value:
+            return
+        self.last_value = value
+        if self.progress_bar is not None:
+            self.progress_bar.update_absolute(value)
+
+    def consume(self, line):
+        match = self._PATTERN.fullmatch(line.strip())
+        if match is not None:
+            self._update(int(match.group(1)))
+
+    def complete(self):
+        self._update(100)
 
 
 def _ffmpeg_binary():
@@ -214,6 +246,7 @@ def _run_xdub(video_path, audio, vae, xdub_model, ref_cfg_scale, audio_cfg_scale
         ]
         env = os.environ.copy()
         env["PYTHONUNBUFFERED"] = "1"
+        progress = _XDubProgressTracker()
         print("[X-Dub] Starting inference subprocess...", flush=True)
         process = subprocess.Popen(
             command,
@@ -227,6 +260,7 @@ def _run_xdub(video_path, audio, vae, xdub_model, ref_cfg_scale, audio_cfg_scale
         output_tail = deque(maxlen=200)
         for line in process.stdout:
             output_tail.append(line)
+            progress.consume(line)
             print(line, end="", flush=True)
         returncode = process.wait()
         if returncode:
@@ -234,6 +268,7 @@ def _run_xdub(video_path, audio, vae, xdub_model, ref_cfg_scale, audio_cfg_scale
                 f"X-Dub inference failed with exit code {returncode}.\n"
                 f"Last output:\n{''.join(output_tail)}"
             )
+        progress.complete()
         print("[X-Dub] Inference subprocess completed.", flush=True)
     if not final_path.exists():
         raise RuntimeError(f"X-Dub did not create the expected output: {final_path}")

@@ -10,6 +10,10 @@ PLUGIN_DIR = Path(__file__).resolve().parents[1]
 SOURCE_DIR = PLUGIN_DIR / "xdub_runtime" / "source"
 sys.path.insert(0, str(SOURCE_DIR))
 
+PROGRESS_PREFIX = "[X-Dub Progress]"
+DIFFUSION_PROGRESS_START = 25
+DIFFUSION_PROGRESS_END = 85
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -36,15 +40,27 @@ def log(message):
     print(f"[X-Dub {time.strftime('%H:%M:%S')}] {message}", flush=True)
 
 
-def console_progress(iterable):
+def report_progress(value):
+    value = max(0, min(100, int(value)))
+    print(f"{PROGRESS_PREFIX} {value}", flush=True)
+
+
+def console_progress(iterable, clip_index=0, num_clips=1):
     total = len(iterable)
     for index, item in enumerate(iterable, start=1):
         log(f"Denoising step {index}/{total}")
+        total_steps = max(1, num_clips * total)
+        global_step = clip_index * total + index
+        value = DIFFUSION_PROGRESS_START + round(
+            (DIFFUSION_PROGRESS_END - DIFFUSION_PROGRESS_START) * global_step / total_steps
+        )
+        report_progress(value)
         yield item
 
 
 def main():
     args = parse_args()
+    report_progress(2)
     log("Resolving runtime model paths...")
     from model_paths import resolve_models
     models = resolve_models()
@@ -77,16 +93,19 @@ def main():
         ckpt_path=args.dit_path,
     )
 
+    report_progress(5)
     log("Preprocessing video, audio, face detection, and pose...")
     sample = original.preprocess_inputs(args.video_path, args.audio_path, source_args)
     sample = original.validate_preprocessed_sample(sample)
     total_length = get_total_length(args.audio_path, original.CLIP_NUM_FRAMES, original.MOTION_NUM_FRAMES)
     log(f"Preprocessing complete: {total_length} output frames at 25 FPS.")
+    report_progress(15)
     indices = make_pingpong_indices(len(sample.ref_video), total_length)
     ref_video = [sample.ref_video[i] for i in indices]
     raw_video = [sample.raw_video[i] for i in indices]
     bboxes = [sample.bboxes[i] for i in indices]
 
+    report_progress(18)
     log("Loading X-Dub, text encoder, VAE, and audio encoders...")
     pipe = LipSyncPipeline().from_pretrained(
         torch_dtype=torch.bfloat16,
@@ -104,6 +123,7 @@ def main():
     pipe.whisper_processor.to(dtype=torch.float32)
     pipe.wav2vec_processor.to(dtype=torch.float32)
     log("Models loaded.")
+    report_progress(25)
 
     num_clips = 1 + max(0, total_length - original.CLIP_NUM_FRAMES) // (original.CLIP_NUM_FRAMES - original.MOTION_NUM_FRAMES)
     motion_video = whisper_feat = wav2vec_feat = None
@@ -137,7 +157,9 @@ def main():
             use_dynamic_cfg=True,
             replace_border_latents=True,
             replace_border_latents_width=1,
-            progress_bar_cmd=console_progress,
+            progress_bar_cmd=lambda iterable, clip_idx=clip_idx: console_progress(
+                iterable, clip_index=clip_idx, num_clips=num_clips
+            ),
         )
         whisper_feat = outputs.get("whisper_feat") if whisper_feat is None else whisper_feat
         wav2vec_feat = outputs.get("wav2vec_feat") if wav2vec_feat is None else wav2vec_feat
@@ -150,22 +172,27 @@ def main():
         log(f"Clip {clip_idx + 1}/{num_clips} complete in {time.monotonic() - clip_started:.1f}s.")
         start_idx += original.CLIP_NUM_FRAMES - original.MOTION_NUM_FRAMES
 
+    report_progress(86)
     log("Diffusion complete. Decoding VAE latents...")
     output_latents = torch.cat(segments, dim=2)
     pipe.load_models_to_device(["vae"])
     decoded = pipe.vae.decode(output_latents, device=pipe.device, tiled=False, tile_size=(32, 32), tile_stride=(16, 16))
     generated = pipe.vae_output_to_video(decoded)[:total_length]
+    report_progress(93)
     log("VAE decode complete. Applying color correction and compositing...")
     generated = color_correction(generated, ref_video[:total_length])
     generated = blend_crop_video_with_ref(generated, ref_video[:total_length], replace_border_latents_width=1)
     final_frames = paste_video_back(generated, raw_video, bboxes)
+    report_progress(96)
     log("Compositing complete. Encoding final video with audio...")
+    report_progress(98)
     save_video_with_audio(final_frames, args.audio_path, "result", str(run_dir))
 
     output_path = Path(args.output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(str(run_dir / "result.mp4"), output_path)
     shutil.rmtree(run_dir, ignore_errors=True)
+    report_progress(100)
     log(f"Finished: {output_path}")
 
 

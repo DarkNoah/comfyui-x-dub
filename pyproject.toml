@@ -1,6 +1,6 @@
 [project]
 name = "x-dub"
-version = "1.0.0"
+version = "1.1.0"
 description = "ComfyUI custom nodes for Kling X-Dub single-person audio-driven lip sync."
 license = { file = "LICENSE" }
 requires-python = ">=3.10"

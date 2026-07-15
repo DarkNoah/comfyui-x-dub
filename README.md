@@ -17,6 +17,8 @@ This is a community ComfyUI integration, not an official KlingAIResearch reposit
 
 Both inference nodes use a standard ComfyUI `VAE` input. The connected Wan 2.2 VAE must have 48 latent channels.
 
+Both inference nodes also report native ComfyUI progress from preprocessing through final encoding. Denoising progress is accumulated across all overlapping clips, while detailed per-step messages remain available in the terminal log.
+
 ## Requirements
 
 - Linux with an NVIDIA CUDA GPU; upstream reports about 21 GB VRAM for inference.
