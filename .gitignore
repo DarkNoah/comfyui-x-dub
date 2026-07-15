@@ -1,6 +1,7 @@
 .venv/
 __pycache__/
 .pytest_cache/
+.worktrees/
 *.pyc
 .DS_Store
 *.egg-info/
